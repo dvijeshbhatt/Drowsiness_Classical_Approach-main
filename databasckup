@@ -1,0 +1,94 @@
+#include "mediapipe/calculators/myelin/driver_drowsiness/Facemesh_to_EAR_calculate.h"
+
+namespace mediapipe
+{
+    absl::Status EARCalculate::init()
+    {
+        // all right eye's points
+        le_point_1 = 362;
+        le_point_2 = 385;
+        le_point_3 = 387;
+        le_point_4 = 263;
+        le_point_5 = 373;
+        le_point_6 = 380;
+        //all left eye's points
+        re_point_1 = 133;
+        re_point_2 = 158;
+        re_point_3 = 160;
+        re_point_4 = 33;
+        re_point_5 = 144;
+        re_point_6 = 153;
+
+        //frameId to start the counter
+        frameID = 0;
+        // EAR of each frame
+        EAR_L= -1.0; // left eye EAR
+        EAR_R = -1.0; // right eye EAR
+        EAR = -1.0; // Average EAR
+        EAR_difference = -1.0 ;// EAR Diffrence
+        Final_EAR = -1.0; //final_EAR
+
+        // Head position
+        Head_Yaw_angle = 0;
+        Head_Pitch_angle = 0;
+
+        return absl:OkStatus();
+
+    }
+
+    std::float EARCalculate::CalculateEAR(NormalizedLandmarkList landmarks, std::pair<float, float> head_angles)
+    {
+        le_dist_p2p6 = hypot((landmarks.landmark(le_point_2).x() - landmarks.landmark(le_point_6).x()),
+                          (landmarks.landmark(le_point_2).y() - landmarks.landmark(le_point_6).y())); 
+        le_dist_p3p5 = hypot((landmarks.landmark(le_point_3).x() - landmarks.landmark(le_point_5).x()),
+                          (landmarks.landmark(le_point_3).y() - landmarks.landmark(le_point_5).y()));
+        le_dist_p1p4 = hypot((landmarks.landmark(le_point_1).x() - landmarks.landmark(le_point_4).x()),
+                          (landmarks.landmark(le_point_1).y() - landmarks.landmark(le_point_4).y()));
+        re_dist_p2p6 = hypot((landmarks.landmark(re_point_2).x() - landmarks.landmark(re_point_6).x()),
+                          (landmarks.landmark(re_point_2).y() - landmarks.landmark(re_point_6).y()));
+        re_dist_p3p5 = hypot((landmarks.landmark(re_point_3).x() - landmarks.landmark(re_point_5).x()),
+                          (landmarks.landmark(re_point_3).y() - landmarks.landmark(re_point_5).y()));
+        re_dist_p1p4 = hypot((landmarks.landmark(re_point_1).x() - landmarks.landmark(re_point_4).x()),
+                          (landmarks.landmark(re_point_1).y() - landmarks.landmark(re_point_4).y()));
+
+        EAR_L = (le_dist_p2p6 + le_dit_p3p5) / (2*le_dist_p1p4);
+        EAR_R = (re_dist_p2p6 + re_dit_p3p5) / (2*re_dist_p1p4);
+
+        // head angle will be used when ever it will be availble
+        // Head_Yaw_angle = head_angle[0].first;
+        // Head_Pitch_angle = head_angle[0].second;
+
+
+        EAR = (EAR_L + EAR_R)/2;
+
+        if (abs(EAR_L - EAR_R) < 0.35)
+        {
+            Final_EAR = EAR;
+        }
+        else{
+            Final_EAR = min(EAR_L,EAR_R);
+        }
+
+    return Final_EAR;
+
+    }
+}
+
+
+#ifndef IRIS_CALC
+#define IRIS_CALC
+
+#include "absl/memory/memory.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
+#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/framework/formats/location_data.pb.h"
+
+
+namespace mediapipe
+{
+    
+}
